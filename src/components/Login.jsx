@@ -18,6 +18,8 @@ function Login() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: async (response) => {
           try {
+            console.log(response.credential);
+            
             const backendResponse = await api.post("/auth/google", {
               idToken: response.credential,
             });
@@ -45,7 +47,7 @@ function Login() {
                 toast.error("You are not authorized for admin panel.");
               }
             } else {
-              navigate("/");
+              navigate("/home");
             }
           } catch (error) {
             console.error("Login failed", error);
