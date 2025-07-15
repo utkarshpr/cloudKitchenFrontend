@@ -56,44 +56,47 @@ const HomePage = () => {
       <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center text-emerald-700">
         Explore Our Delicious Menu
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {catalog.map((item) => (
-          <motion.div
-            key={item.ID}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col justify-between border border-gray-200"
-          >
-            {item.ImageURL ? (
-              <img
-                src={item.ImageURL}
-                alt={item.Name}
-                className="w-full h-48 object-cover"
-              />
-            ) : (
-              <div className="w-full h-48 flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
-                No Image Available
-              </div>
-            )}
-            <div className="p-4 flex flex-col flex-grow">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {item.Name}
-              </h2>
-              <p className="text-sm text-gray-600 mt-1 flex-grow">
-                {item.Description}
-              </p>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-lg font-bold text-emerald-600">
-                  ₹{item.Price}
-                </span>
-                <button className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-full transition-colors">
-                  <ShoppingCart size={20} />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+  {catalog.map((item) => (
+    <motion.div
+      key={item.ID}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      className="bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition-all duration-300 flex flex-col overflow-hidden"
+    >
+      {item.ImageURL ? (
+        <motion.img
+          src={item.ImageURL}
+          alt={item.Name}
+          className="w-full h-48 object-cover transition-transform duration-500 hover:scale-105"
+        />
+      ) : (
+        <div className="w-full h-48 flex items-center justify-center bg-gray-50 text-gray-300 text-sm">
+          No Image
+        </div>
+      )}
+
+      <div className="p-4 flex flex-col flex-grow">
+        <h2 className="text-lg font-semibold text-gray-800 mb-1 truncate">
+          {item.Name}
+        </h2>
+        <p className="text-sm text-gray-500 flex-grow line-clamp-2">
+          {item.Description}
+        </p>
+
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-base font-bold text-emerald-600">
+            ₹{item.Price}
+          </span>
+          <button className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-full transition-colors">
+            <ShoppingCart size={18} />
+          </button>
+        </div>
       </div>
+    </motion.div>
+  ))}
+</div>
+
     </div>
   );
 };
