@@ -18,7 +18,7 @@ function Login() {
         client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
         callback: async (response) => {
           try {
-            console.log(response.credential);
+            localStorage.setItem("idToken", response.credential);
             
             const backendResponse = await api.post("/auth/google", {
               idToken: response.credential,
