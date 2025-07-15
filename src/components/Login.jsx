@@ -39,6 +39,7 @@ function Login() {
 
             // Show success toast
            console.log("Login Successful 🎉");
+           toast.success("Login Successful 🎉")
 
             if (userType === "admin") {
               if (allowedAdminEmails.includes(user.email)) {
