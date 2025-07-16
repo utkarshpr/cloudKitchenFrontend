@@ -14,7 +14,7 @@ function DashboardPage() {
       setLoading(true);
       const token = localStorage.getItem("cloudAuth");
       const response = await axios.get(
-        "http://localhost:8080/api/getCatalog",
+        "https://cloudkitchenbackend.fly.dev/api/getCatalog",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCatalog(response.data);
