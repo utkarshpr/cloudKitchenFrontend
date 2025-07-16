@@ -10,7 +10,7 @@ function Login() {
   const navigate = useNavigate();
   const googleButtonRef = useRef(null);
   const [userType, setUserType] = useState("customer");
-  const allowedAdminEmails = ["upravind19@gmail.com"];
+  const allowedAdminEmails = ["upravind19@gmail.com","utkarshbgp98@gmail.com"];
 
   useEffect(() => {
     if (window.google && googleButtonRef.current) {

@@ -20,7 +20,7 @@ const Navbar = () => {
   };
 
   const links = [
-    { name: "Menu", href: "/menu" },
+    { name: "Menu", href: "/home" },
     { name: "Orders", href: "/orders" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
