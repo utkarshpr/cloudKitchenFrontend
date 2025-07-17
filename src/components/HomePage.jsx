@@ -1,6 +1,7 @@
 // Enhanced HomePage with quantity + - cart functionality for logged-in users
 
 import React, { useEffect, useState } from "react";
+import { Toaster } from 'react-hot-toast';
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -121,6 +122,7 @@ useEffect(() => {
     );
   }
 
+ 
   const handleQuantityChange = async (itemId, delta) => {
     try {
         const token = localStorage.getItem("cloudAuth");
@@ -150,7 +152,15 @@ useEffect(() => {
             return updated;
         });
 
-        toast.success("Cart updated");
+       
+        if (delta > 0) {
+          toast.success('✅ Added to cart');
+        } else if (newQuantity === 0) {
+          toast('❌ Removed from cart', { icon: '🗑️' });
+        } else {
+          toast.success('🛒 Quantity updated');
+        }
+        
     } catch (error) {
         console.error(error);
         toast.error("Failed to update cart");
@@ -163,72 +173,77 @@ useEffect(() => {
       <h1 className="text-center text-4xl md:text-5xl font-extrabold text-emerald-600 mb-6 md:mb-10">
         🍽️ Explore Our Delicious Menu
       </h1>
-
+      
       <button
-        onClick={() => setShowCategorySheet(true)}
-        className="fixed bottom-5 left-5 z-30 bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-full shadow-lg"
-      >
-        <Menu size={24} />
-      </button>
+  onClick={() => setShowCategorySheet(true)}
+  title="Menu"
+  className="fixed bottom-5 right-5 z-30 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-4 rounded-full shadow-lg transition"
+>
+  <Menu size={24} />
+</button>
 
-      {showCategorySheet && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 flex justify-center items-end"
-          onClick={() => setShowCategorySheet(false)}
-        >
-          <div
-            className="bg-white rounded-t-2xl w-full max-w-md p-4"
-            onClick={(e) => e.stopPropagation()}
+{showCategorySheet && (
+  <div
+    className="fixed inset-0 bg-black/50 z-40 flex justify-center items-end"
+    onClick={() => setShowCategorySheet(false)}
+  >
+    <div
+      className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-8"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Drag Handle */}
+      <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+
+      <h2 className="text-xl font-bold mb-4 text-center text-emerald-600">
+        📜 Browse Menu Sections
+      </h2>
+      <div className="flex flex-wrap justify-center gap-3">
+        {categoryTypes.map((type) => (
+          <button
+            key={type}
+            onClick={() => {
+              document.getElementById(type)?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+              setShowCategorySheet(false);
+            }}
+            className="px-4 py-2 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-sm font-medium shadow-sm transition"
           >
-            <h2 className="text-lg font-semibold mb-3 text-center">
-              Jump to Section
-            </h2>
-            <div className="flex flex-wrap justify-center gap-2">
-              {categoryTypes.map((type) => (
-                <button
-                  key={type}
-                  onClick={() => {
-                    document.getElementById(type)?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                    setShowCategorySheet(false);
-                  }}
-                  className="px-4 py-1 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-sm"
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+            {type}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
-        <div className="relative w-full sm:w-1/2">
-          <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search dishes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full shadow-sm"
-          />
-        </div>
-        <div className="relative">
-          <Filter className="absolute left-3 top-3 text-gray-400" size={20} />
+      <div className="relative w-full sm:w-1/2">
+  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-500" size={20} />
+  <input
+    type="text"
+    placeholder="🔍 Search dishes..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="pl-10 pr-4 py-2 w-full bg-white/80 backdrop-blur border border-emerald-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition text-emerald-800 placeholder-emerald-400"
+  />
+</div>
+
+        <div className="relative w-full sm:w-64">
+          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-500" size={20} />
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-full shadow-sm"
+            className="pl-10 pr-4 py-2 w-full bg-white/80 backdrop-blur border border-emerald-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition text-emerald-800"
           >
-            <option value="all">All Categories</option>
-            <option value="veg">Veg</option>
-            <option value="non-veg">Non-Veg</option>
+            <option value="all">🌿 All Categories</option>
+            <option value="veg">🥗 Veg</option>
+            <option value="non-veg">🍗 Non-Veg</option>
           </select>
         </div>
       </div>
-
+      <Toaster position="top-center" reverseOrder={false} />
       {Object.entries(typesGrouped).map(([type, items]) => (
         <div key={type} id={type} className="mb-10 scroll-mt-20">
           <h2 className="text-2xl md:text-3xl font-bold text-emerald-500 mb-4 capitalize">
