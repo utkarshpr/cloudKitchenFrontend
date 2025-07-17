@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { Toaster } from 'react-hot-toast';
-import { toast } from "react-hot-toast";
-import { MapPin, Edit, Trash2, Plus } from "lucide-react";
+import { Toaster, toast } from "react-hot-toast";
+import { MapPin, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
 import Navbar from "./Navbar";
 
 const PaymentPage = () => {
   const [user, setUser] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editedName, setEditedName] = useState("");
-  const [editedPicture, setEditedPicture] = useState("");
-
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
+  const [addingAddress, setAddingAddress] = useState(false);
   const [addressForm, setAddressForm] = useState({
     Name: "",
     City: "",
     State: "",
     Pincode: "",
-    Phone: ""
+    Phone: "",
   });
-  const [addingAddress, setAddingAddress] = useState(false);
 
   const DEFAULT_PIC =
     "https://imgs.search.brave.com/Z0EEymsLVCCMKvWpyP6Vc3cjb_v0Zy3vu42RTP-FfCc/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/cGl4YWJheS5jb20v/cGhvdG8vMjAxNy8w/Ni8xMy8xMi81NC9w/cm9maWxlLTIzOTg3/ODNfNjQwLnBuZw";
@@ -33,8 +29,6 @@ const PaymentPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
-        setEditedName(res.data.name);
-        setEditedPicture(res.data.picture);
       } catch {
         toast.error("Failed to load user data");
       }
@@ -50,19 +44,62 @@ const PaymentPage = () => {
     setUser(res.data);
   };
 
-  const handleSaveProfile = async () => {
+  const validateAddressForm = () => {
+    const { Name, City, State, Pincode, Phone } = addressForm;
+    if (!Name || !City || !State || !Pincode || !Phone) {
+      toast.error("All address fields are required.");
+      return false;
+    }
+    if (!/^\d{10}$/.test(Phone)) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddOrUpdateAddress = async () => {
+    if (!validateAddressForm()) return;
     try {
       const token = localStorage.getItem("cloudAuth");
-      await axios.put(
-        "https://cloudkitchenbackend.fly.dev/api/user/update",
-        { Name: editedName, Picture: editedPicture },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Profile updated!");
+      if (addingAddress) {
+        await axios.post(
+          "https://cloudkitchenbackend.fly.dev/api/addUser",
+          {
+            name: addressForm.Name,
+            city: addressForm.City,
+            state: addressForm.State,
+            pincode: addressForm.Pincode,
+            phone: addressForm.Phone,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Address added!");
+      } else if (editingAddress) {
+        await axios.put(
+          `https://cloudkitchenbackend.fly.dev/api/address/${editingAddress.ID}`,
+          addressForm,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Address updated!");
+      }
       await refreshUser();
-      setShowEditModal(false);
+      closeModal();
     } catch {
-      toast.error("Failed to update profile");
+      toast.error("Failed to save address.");
+    }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    try {
+      const token = localStorage.getItem("cloudAuth");
+      await axios.delete(`https://cloudkitchenbackend.fly.dev/api/address/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Address deleted!");
+      if (selectedAddressId === id) setSelectedAddressId(null);
+      await refreshUser();
+    } catch {
+      toast.error("Failed to delete address.");
     }
   };
 
@@ -77,67 +114,16 @@ const PaymentPage = () => {
     });
   };
 
-  const validateAddressForm = () => {
-    const { Name, City, State, Pincode, Phone } = addressForm;
-    if (!Name || !City || !State || !Pincode || !Phone) {
-      toast.error("All address fields are required.");
-      return false;
-    }
-    return true;
+  const closeModal = () => {
+    setAddingAddress(false);
+    setEditingAddress(null);
+    setAddressForm({ Name: "", City: "", State: "", Pincode: "", Phone: "" });
   };
 
-  const handleUpdateAddress = async () => {
-    if (!validateAddressForm()) return;
-    try {
-      const token = localStorage.getItem("cloudAuth");
-      await axios.put(
-        `https://cloudkitchenbackend.fly.dev/api/address/${editingAddress.ID}`,
-        addressForm,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Address updated!");
-      await refreshUser();
-      setEditingAddress(null);
-    } catch {
-      toast.error("Failed to update address");
-    }
-  };
-
-  const handleDeleteAddress = async (id) => {
-    try {
-      const token = localStorage.getItem("cloudAuth");
-      await axios.delete(`https://cloudkitchenbackend.fly.dev/api/address/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      toast.success("Address deleted!");
-      await refreshUser();
-    } catch {
-      toast.error("Failed to delete address");
-    }
-  };
-
-  const handleAddAddress = async () => {
-    if (!validateAddressForm()) return;
-    try {
-      const token = localStorage.getItem("cloudAuth");
-      await axios.post(
-        "https://cloudkitchenbackend.fly.dev/api/addUser",
-        {
-          name: addressForm.Name,
-          city: addressForm.City,
-          state: addressForm.State,
-          pincode: addressForm.Pincode,
-          phone: addressForm.Phone,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success("Address added!");
-      await refreshUser();
-      setAddingAddress(false);
-      setAddressForm({ Name: "", City: "", State: "", Pincode: "", Phone: "" });
-    } catch {
-      toast.error("Failed to add address");
-    }
+  const handleCheckout = () => {
+    const selectedAddress = user.addresses.find(a => a.ID === selectedAddressId);
+    toast.success(`Proceeding with checkout for:\n${selectedAddress.Name}, ${selectedAddress.City}`);
+    // navigate("/payment") or integrate payment API here
   };
 
   if (!user) return <div className="p-10">Loading...</div>;
@@ -146,10 +132,11 @@ const PaymentPage = () => {
     <>
       <Navbar />
       <Toaster position="top-center" reverseOrder={false} />
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-16">
         <h1 className="text-3xl font-bold mb-6 text-emerald-600">🧾 Payment Details</h1>
-        <div className="bg-white p-6 rounded-xl shadow space-y-4">
-          <div className="flex items-center space-x-4">
+        <div className="bg-white p-6 rounded-xl shadow space-y-6">
+                   
+        <div className="flex items-center space-x-4">
             <img
               src={user.picture || DEFAULT_PIC}
               alt="Profile"
@@ -160,21 +147,14 @@ const PaymentPage = () => {
               <p className="text-gray-600">{user.email}</p>
               <p className="text-gray-500 text-sm">Role: {user.role}</p>
             </div>
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="ml-auto bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg"
-            >
-              Edit Profile
-            </button>
+            
           </div>
-
           {/* Address Section */}
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold">Your Saved Addresses</h3>
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Select Delivery Address</h3>
               <button
                 onClick={() => {
-                  setAddressForm({ Name: "", City: "", State: "", Pincode: "", Phone: "" });
                   setAddingAddress(true);
                 }}
                 className="flex items-center space-x-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm"
@@ -188,7 +168,10 @@ const PaymentPage = () => {
                 user.addresses.map((address) => (
                   <div
                     key={address.ID}
-                    className="p-4 border rounded-lg flex items-start justify-between bg-gray-50"
+                    className={`p-4 border rounded-lg flex items-start justify-between cursor-pointer ${
+                      selectedAddressId === address.ID ? "bg-emerald-50 border-emerald-400" : "bg-gray-50"
+                    }`}
+                    onClick={() => setSelectedAddressId(address.ID)}
                   >
                     <div className="flex items-start space-x-2">
                       <MapPin className="text-emerald-600 mt-1" />
@@ -201,14 +184,15 @@ const PaymentPage = () => {
                       </div>
                     </div>
                     <div className="flex space-x-2">
+                      {selectedAddressId === address.ID && <CheckCircle className="text-emerald-600 w-5 h-5 mt-1" />}
                       <button
-                        onClick={() => openEditAddress(address)}
+                        onClick={(e) => { e.stopPropagation(); openEditAddress(address); }}
                         className="p-2 rounded hover:bg-emerald-50"
                       >
                         <Edit className="w-5 h-5 text-emerald-600" />
                       </button>
                       <button
-                        onClick={() => handleDeleteAddress(address.ID)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteAddress(address.ID); }}
                         className="p-2 rounded hover:bg-red-50"
                       >
                         <Trash2 className="w-5 h-5 text-red-500" />
@@ -221,38 +205,25 @@ const PaymentPage = () => {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Edit Profile Modal */}
-        {showEditModal && (
-          <Modal
-            title="Edit Profile"
-            onClose={() => setShowEditModal(false)}
-            onSave={handleSaveProfile}
-            fields={[
-              {
-                label: "Name",
-                value: editedName,
-                onChange: (e) => setEditedName(e.target.value),
-              },
-              {
-                label: "Profile Picture URL",
-                value: editedPicture,
-                onChange: (e) => setEditedPicture(e.target.value),
-              },
-            ]}
-          />
-        )}
+          {/* Proceed with Checkout Button */}
+          <button
+            disabled={!selectedAddressId}
+            onClick={handleCheckout}
+            className={`w-full py-3 rounded-lg text-white text-lg font-medium ${
+              selectedAddressId ? "bg-emerald-500 hover:bg-emerald-600" : "bg-gray-300 cursor-not-allowed"
+            }`}
+          >
+            Proceed with Checkout
+          </button>
+        </div>
 
         {/* Add/Edit Address Modal */}
         {(addingAddress || editingAddress) && (
           <Modal
             title={addingAddress ? "Add Address" : "Edit Address"}
-            onClose={() => {
-              setAddingAddress(false);
-              setEditingAddress(null);
-            }}
-            onSave={addingAddress ? handleAddAddress : handleUpdateAddress}
+            onClose={closeModal}
+            onSave={handleAddOrUpdateAddress}
             fields={[
               { label: "Name", value: addressForm.Name, onChange: (e) => setAddressForm({ ...addressForm, Name: e.target.value }) },
               { label: "City", value: addressForm.City, onChange: (e) => setAddressForm({ ...addressForm, City: e.target.value }) },
