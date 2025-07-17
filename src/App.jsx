@@ -9,6 +9,7 @@ import EditCatalogPage from './pages/EditCatalogPage.jsx';
 import CartPage from './pages/CartPage.jsx';
 import Contact from './pages/Contact.jsx';
 import About from './pages/About.jsx';
+import PaymentPage from './pages/Payment.jsx';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
+          <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path='/home' element={ <ProtectedRoute>
