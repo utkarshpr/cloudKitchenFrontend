@@ -13,58 +13,69 @@ function Login() {
   const allowedAdminEmails = ["upravind19@gmail.com","utkarshbgp98@gmail.com"];
 
   useEffect(() => {
-    if (window.google && googleButtonRef.current) {
-      window.google.accounts.id.initialize({
-        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        callback: async (response) => {
-          try {
-            localStorage.setItem("idToken", response.credential);
-            
-            const backendResponse = await api.post("/auth/google", {
-              idToken: response.credential,
-            });
-            localStorage.setItem("cloudAuth", backendResponse.data.token);
-
-            // Decode Google ID Token to extract user info
-            const parts = response.credential.split('.');
-            if (parts.length === 3) {
-              const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-              localStorage.setItem("cloudUser", JSON.stringify(payload));
-            } else {
-              console.error("Invalid ID token structure");
-            }
-
-            const user = JSON.parse(localStorage.getItem("cloudUser"));
-            console.log(user);
-
-            // Show success toast
-           console.log("Login Successful 🎉");
-           toast.success("Login Successful 🎉")
-
-            if (userType === "admin") {
-              if (allowedAdminEmails.includes(user.email)) {
-                navigate("/admin/dashboard");
-              } else {
-                toast.error("You are not authorized for admin panel.");
+    let retryCount = 0;
+  
+    const initializeGoogle = () => {
+      if (window.google && googleButtonRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          callback: async (response) => {
+            try {
+              localStorage.setItem("idToken", response.credential);
+              const backendResponse = await api.post("/auth/google", {
+                idToken: response.credential,
+              });
+              localStorage.setItem("cloudAuth", backendResponse.data.token);
+  
+              // Decode Google ID Token
+              const parts = response.credential.split('.');
+              if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                localStorage.setItem("cloudUser", JSON.stringify(payload));
               }
-            } else {
-              navigate("/home");
+  
+              const user = JSON.parse(localStorage.getItem("cloudUser"));
+              console.log("Login Successful 🎉");
+              toast.success("Login Successful 🎉");
+  
+              if (userType === "admin") {
+                if (allowedAdminEmails.includes(user.email)) {
+                  navigate("/admin/dashboard");
+                } else {
+                  toast.error("You are not authorized for admin panel.");
+                }
+              } else {
+                navigate("/home");
+              }
+            } catch (error) {
+              console.error("Login failed", error);
+              toast.error("Login Failed ❌");
             }
-          } catch (error) {
-            console.error("Login failed", error);
-            toast.error("Login Failed ❌");
-          }
-        },
-      });
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: "outline",
-        size: "large",
-        type: "standard",
-        shape: "pill",
-        text: "signin_with",
-      });
-    }
+          },
+        });
+  
+        window.google.accounts.id.renderButton(googleButtonRef.current, {
+          theme: "outline",
+          size: "large",
+          type: "standard",
+          shape: "pill",
+          text: "signin_with",
+        });
+      } else {
+        if (retryCount < 5) {
+          retryCount++;
+          console.log(`Retrying Google SDK initialization (${retryCount})...`);
+          setTimeout(initializeGoogle, 500); // Retry after 0.5 sec
+        } else {
+          console.error("Google SDK failed to load after multiple retries.");
+          toast.error("Failed to load Google Sign-In. Please refresh.");
+        }
+      }
+    };
+  
+    initializeGoogle();
   }, [navigate, userType]);
+  
 
   return (
     <div className="relative w-screen h-screen overflow-hidden flex flex-col justify-between">

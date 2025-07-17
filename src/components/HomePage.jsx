@@ -169,7 +169,7 @@ useEffect(() => {
 
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16">
+    <div className="max-w-7xl mx-auto px-4 py-20">
       <h1 className="text-center text-4xl md:text-5xl font-extrabold text-emerald-600 mb-6 md:mb-10">
         🍽️ Explore Our Delicious Menu
       </h1>
