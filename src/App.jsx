@@ -6,6 +6,8 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import CreateCatalogPage from './pages/CreateCatalogPage.jsx';
 import EditCatalogPage from './pages/EditCatalogPage.jsx';
 
+import CartPage from './pages/CartPage.jsx';
+
 function App() {
   return (
     <Router>
@@ -30,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EditCatalogPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/cart"
+          element={
+            <ProtectedRoute>
+              <CartPage />
             </ProtectedRoute>
           }
         />

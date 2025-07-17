@@ -1,8 +1,10 @@
+// Enhanced HomePage with quantity + - cart functionality for logged-in users
+
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { ShoppingCart, Search, Filter, Menu } from "lucide-react";
+import { Search, Filter, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
 
@@ -13,6 +15,10 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [showCategorySheet, setShowCategorySheet] = useState(false);
+  const [cartItems, setCartItems] = useState({});
+  const [cartLoading, setCartLoading] = useState(true);
+
+
   const navigate = useNavigate();
 
   const fetchCatalog = async () => {
@@ -70,6 +76,42 @@ const HomePage = () => {
   }, {});
 
   const categoryTypes = Object.keys(typesGrouped);
+  const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
+  const userEmail = cloudUser?.email;
+
+  const fetchCartItems = async () => {
+    try {
+        setCartLoading(true);
+        const token = localStorage.getItem("cloudAuth");
+        if (!token || !userEmail) {
+            toast.error("You are not logged in!");
+            navigate("/login");
+            return;
+        }
+        const response = await axios.get(
+            `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(userEmail)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const cartMap = {};
+        response.data.forEach(item => {
+            cartMap[item.ItemID] = item.Quantity; // CASE SENSITIVE
+        });
+        setCartItems(cartMap);
+    } catch (error) {
+        console.error(error);
+        toast.error("Failed to fetch cart items");
+    } finally {
+        setCartLoading(false);
+    }
+};
+
+useEffect(() => {
+    fetchCatalog();
+    fetchCartItems();
+}, []);
+
+
 
   if (loading) {
     return (
@@ -79,21 +121,56 @@ const HomePage = () => {
     );
   }
 
+  const handleQuantityChange = async (itemId, delta) => {
+    try {
+        const token = localStorage.getItem("cloudAuth");
+        if (!token || !userEmail) {
+            toast.error("You are not logged in!");
+            navigate("/login");
+            return;
+        }
+
+        const currentQty = cartItems[itemId] || 0;
+        const newQuantity = currentQty + delta;
+        if (newQuantity < 0) return;
+
+        await axios.post(
+            "https://cloudkitchenbackend.fly.dev/api/cart/update",
+            { itemId, quantity: newQuantity },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setCartItems(prev => {
+            const updated = { ...prev };
+            if (newQuantity === 0) {
+                delete updated[itemId];
+            } else {
+                updated[itemId] = newQuantity;
+            }
+            return updated;
+        });
+
+        toast.success("Cart updated");
+    } catch (error) {
+        console.error(error);
+        toast.error("Failed to update cart");
+    }
+};
+
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16 ">
+    <div className="max-w-7xl mx-auto px-4 py-16">
       <h1 className="text-center text-4xl md:text-5xl font-extrabold text-emerald-600 mb-6 md:mb-10">
         🍽️ Explore Our Delicious Menu
       </h1>
 
-      {/* Floating Menu Button */}
       <button
         onClick={() => setShowCategorySheet(true)}
-        className="fixed bottom-5 left-5 z-30 bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-full shadow-lg flex items-center justify-center"
+        className="fixed bottom-5 left-5 z-30 bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-full shadow-lg"
       >
         <Menu size={24} />
       </button>
 
-      {/* Category Popup Sheet */}
       {showCategorySheet && (
         <div
           className="fixed inset-0 bg-black/50 z-40 flex justify-center items-end"
@@ -103,7 +180,9 @@ const HomePage = () => {
             className="bg-white rounded-t-2xl w-full max-w-md p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold mb-3 text-center">Jump to Section</h2>
+            <h2 className="text-lg font-semibold mb-3 text-center">
+              Jump to Section
+            </h2>
             <div className="flex flex-wrap justify-center gap-2">
               {categoryTypes.map((type) => (
                 <button
@@ -115,7 +194,7 @@ const HomePage = () => {
                     });
                     setShowCategorySheet(false);
                   }}
-                  className="px-4 py-1 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition text-sm"
+                  className="px-4 py-1 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-sm"
                 >
                   {type}
                 </button>
@@ -125,7 +204,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* Search and Filter Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
         <div className="relative w-full sm:w-1/2">
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -134,7 +212,7 @@ const HomePage = () => {
             placeholder="Search dishes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full shadow-sm focus:border-emerald-400 focus:outline-none"
+            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-full shadow-sm"
           />
         </div>
         <div className="relative">
@@ -142,7 +220,7 @@ const HomePage = () => {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-full shadow-sm focus:border-emerald-400 focus:outline-none"
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-full shadow-sm"
           >
             <option value="all">All Categories</option>
             <option value="veg">Veg</option>
@@ -151,7 +229,6 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Catalog Display */}
       {Object.entries(typesGrouped).map(([type, items]) => (
         <div key={type} id={type} className="mb-10 scroll-mt-20">
           <h2 className="text-2xl md:text-3xl font-bold text-emerald-500 mb-4 capitalize">
@@ -163,7 +240,7 @@ const HomePage = () => {
                 key={item.ID}
                 whileHover={{ y: -5 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-white rounded-2xl shadow hover:shadow-lg transition-transform duration-300 overflow-hidden cursor-pointer flex flex-col"
+                className="bg-white rounded-2xl shadow hover:shadow-lg overflow-hidden cursor-pointer flex flex-col"
               >
                 {item.ImageURL ? (
                   <img
@@ -194,9 +271,21 @@ const HomePage = () => {
                     <span className="text-emerald-600 font-bold text-sm md:text-base">
                       ₹{item.Price}
                     </span>
-                    <button className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-full transition-colors">
-                      <ShoppingCart size={18} />
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleQuantityChange(item.ID, -1)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                      >
+                        -
+                      </button>
+                      <span>{cartLoading ? "..." : (cartItems[item.ID] || 0)}</span>
+                      <button
+                        onClick={() => handleQuantityChange(item.ID, 1)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
