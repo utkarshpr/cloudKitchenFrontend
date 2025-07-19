@@ -22,6 +22,10 @@ const PaymentPage = () => {
   const [loadingCart, setLoadingCart] = useState(true);
   const [showQr, setShowQr] = useState(false);
   const [utr, setUtr] = useState("");
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [loadingOtp, setLoadingOtp] = useState(false);
+  const [userUpiId, setUserUpiId] = useState("");
 
   const DEFAULT_PIC =
     "https://imgs.search.brave.com/Z0EEymsLVCCMKvWpyP6Vc3cjb_v0Zy3vu42RTP-FfCc/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/cGl4YWJheS5jb20v/cGhvdG8vMjAxNy8w/Ni8xMy8xMi81NC9w/cm9maWxlLTIzOTg3/ODNfNjQwLnBuZw";
@@ -112,6 +116,36 @@ const PaymentPage = () => {
     if (!validateAddressForm()) return;
     try {
       const token = localStorage.getItem("cloudAuth");
+      setLoadingOtp(true); // show loader
+
+      await axios.post(
+        "https://cloudkitchenbackend.fly.dev/api/address/send-otp",
+        { email: user.email },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("OTP sent to your email. Please verify.");
+      setIsVerifyingOtp(true);
+    } catch (err) {
+      toast.error("Failed to send OTP.");
+    } finally {
+      setLoadingOtp(false); // hide loader
+    }
+  };
+
+  const handleVerifyOtpAndSave = async () => {
+    try {
+      const token = localStorage.getItem("cloudAuth");
+      await axios.post(
+        "https://cloudkitchenbackend.fly.dev/api/address/verify-otp",
+        {
+          email: user.email, // or addressForm.Email if you add
+          otp: otp.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // After OTP verification, proceed to save the address
       if (addingAddress) {
         await axios.post(
           "https://cloudkitchenbackend.fly.dev/api/addUser",
@@ -133,10 +167,13 @@ const PaymentPage = () => {
         );
         toast.success("Address updated!");
       }
+
       await refreshUser();
       closeModal();
-    } catch {
-      toast.error("Failed to save address.");
+      setIsVerifyingOtp(false);
+      setOtp("");
+    } catch (err) {
+      toast.error("Invalid OTP, please try again.");
     }
   };
 
@@ -188,7 +225,7 @@ const PaymentPage = () => {
 
   const handleSubmitUtr = async () => {
     console.log(user);
-    
+
     try {
       const token = localStorage.getItem("cloudAuth");
       const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
@@ -197,30 +234,31 @@ const PaymentPage = () => {
         return;
       }
 
-      
+      // Extract cart items as { item_id, quantity } for backend
+      const orderItems = cartItems.map((item) => ({
+        item_id: item.ItemID,
+        quantity: item.Quantity,
+      }));
 
-// Extract cart items as { item_id, quantity } for backend
-const orderItems = cartItems.map((item) => ({
-  item_id: item.ItemID,
-  quantity: item.Quantity,
-}));
+      const selectedAddress = user.addresses.find(
+        (a) => a.ID === selectedAddressId
+      );
 
-const selectedAddress = user.addresses.find((a) => a.ID === selectedAddressId);
-
-const orderResponse = await axios.post(
-  "https://cloudkitchenbackend.fly.dev/api/orders/create",
-  {
-    user_id: user.id,
-    user_email: user.email,
-    user_name: user.name,
-    amount: calculateTotal(),
-    address_id: selectedAddressId,
-    address: selectedAddress,          // entire address object
-    items: orderItems,                 // pass cart items to backend
-    utr: utr.trim(),   
-  },
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+      const orderResponse = await axios.post(
+        "https://cloudkitchenbackend.fly.dev/api/orders/create",
+        {
+          user_id: user.id,
+          user_email: user.email,
+          user_name: user.name,
+          amount: calculateTotal(),
+          address_id: selectedAddressId,
+          address: selectedAddress, // entire address object
+          items: orderItems, // pass cart items to backend
+          utr: utr.trim(),
+          user_upi_id: userUpiId.trim(),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       const orderId = orderResponse.data.ID;
 
@@ -381,23 +419,222 @@ const orderResponse = await axios.post(
                 payeeName="Utkarsh"
                 amount={calculateTotal()}
               />
-              <input
-                type="text"
-                placeholder="Enter UTR after payment"
-                value={utr}
-                onChange={(e) => setUtr(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-              />
-              <button
-                onClick={handleSubmitUtr}
-                className="w-full py-3 rounded-lg text-white bg-emerald-500 hover:bg-emerald-600"
-                disabled={!utr}
-              >
-                Submit UTR & Confirm Payment
-              </button>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium">UPI ID:</span>
+                <span
+                  className="bg-gray-100 px-2 py-1 rounded cursor-pointer select-none"
+                  onClick={() => {
+                    navigator.clipboard.writeText("7979012363@upi");
+                    toast.success("UPI ID copied to clipboard!");
+                  }}
+                >
+                  7979012363@upi
+                </span>
+              </div>
+              <div>
+                <label className="block mb-2 text-sm font-medium text-gray-700">
+                  Upload Payment Screenshot
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append("payment_screenshot", file);
+
+                    const token = localStorage.getItem("cloudAuth");
+                    const cloudUser = JSON.parse(
+                      localStorage.getItem("cloudUser")
+                    );
+                    const orderItems = cartItems.map((item) => ({
+                      item_id: item.ItemID,
+                      quantity: item.Quantity,
+                    }));
+                    const selectedAddress = user.addresses.find(
+                      (a) => a.ID === selectedAddressId
+                    );
+
+                    toast.promise(
+                      axios
+                        .post(
+                          "https://cloudkitchenbackend.fly.dev/api/orders/create-with-screenshot",
+                          {
+                            user_id: user.id,
+                            user_email: user.email,
+                            user_name: user.name,
+                            amount: calculateTotal(),
+                            address_id: selectedAddressId,
+                            address: selectedAddress,
+                            items: orderItems,
+                          },
+                          {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                            },
+                            params: {
+                              // Optional query params if needed
+                            },
+                          }
+                        )
+                        .then(async (res) => {
+                          const orderId = res.data.ID;
+                          await axios.post(
+                            `https://cloudkitchenbackend.fly.dev/api/orders/${orderId}/upload-payment-screenshot`,
+                            formData,
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "multipart/form-data",
+                              },
+                            }
+                          );
+                          toast.success(
+                            "Payment screenshot uploaded! Redirecting..."
+                          );
+                          setTimeout(() => {
+                            window.location.href = "/orders";
+                          }, 1500);
+                        }),
+                      {
+                        loading: "Uploading screenshot...",
+                        success: "Payment screenshot uploaded!",
+                        error: "Failed to upload screenshot. Try again.",
+                      }
+                    );
+                  }}
+                  className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                />
+              </div>
             </div>
           )}
         </div>
+        {addingAddress && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
+              <h3 className="text-lg font-semibold">
+                {editingAddress ? "Edit Address" : "Add New Address"}
+              </h3>
+              <input
+                type="text"
+                placeholder="Name"
+                value={addressForm.Name}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, Name: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              />
+              <input
+                type="text"
+                placeholder="City"
+                value={addressForm.City}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, City: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              />
+              <input
+                type="text"
+                placeholder="State"
+                value={addressForm.State}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, State: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              />
+              <input
+                type="text"
+                placeholder="Pincode"
+                value={addressForm.Pincode}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, Pincode: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              />
+              <input
+                type="text"
+                placeholder="Phone"
+                value={addressForm.Phone}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, Phone: e.target.value })
+                }
+                className="w-full border rounded p-2"
+              />
+              <div className="flex space-x-2 justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddOrUpdateAddress}
+                  className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {isVerifyingOtp && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm space-y-4">
+              <h3 className="text-lg font-semibold">Enter OTP to verify</h3>
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full border rounded p-2"
+              />
+              <div className="flex space-x-2 justify-end">
+                <button
+                  onClick={() => {
+                    setIsVerifyingOtp(false);
+                    setOtp("");
+                  }}
+                  className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleVerifyOtpAndSave}
+                  className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-600 text-white"
+                >
+                  Verify & Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {loadingOtp && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white rounded-full p-4 flex items-center justify-center">
+              <svg
+                className="animate-spin h-8 w-8 text-emerald-600"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
