@@ -5,8 +5,10 @@ import { Toaster, toast } from "react-hot-toast";
 import { MapPin, Edit, Trash2, Plus, CheckCircle } from "lucide-react";
 import Navbar from "./Navbar";
 import UpiQr from "../components/UpiQr";
+import { useNavigate } from "react-router-dom";
 
 const PaymentPage = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -494,7 +496,7 @@ const PaymentPage = () => {
                     
                         toast.success("Cart cleared successfully! Redirecting...");
                         setTimeout(() => {
-                          window.location.href = "/orders";
+                          navigate("/orders");
                         }, 1500);
                       } catch (error) {
                         console.error(error);
