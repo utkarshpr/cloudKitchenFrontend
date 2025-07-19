@@ -249,7 +249,7 @@ useEffect(() => {
           <h2 className="text-2xl md:text-3xl font-bold text-emerald-500 mb-4 capitalize">
             {type}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6">
             {items.map((item) => (
               <motion.div
                 key={item.ID}
