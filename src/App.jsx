@@ -12,10 +12,12 @@ import About from './pages/About.jsx';
 import PaymentPage from './pages/Payment.jsx';
 
 import OrdersPage from './components/OrderForm.jsx';
+import ScrollToTop from './components/ScrollToTop.jsx';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop/>
       <div className="min-h-screen bg-gray-100">
         <Routes>
           <Route path="/" element={<LoginPage />} />

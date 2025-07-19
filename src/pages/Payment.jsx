@@ -8,6 +8,9 @@ import UpiQr from "../components/UpiQr";
 import { useNavigate } from "react-router-dom";
 
 const PaymentPage = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -234,7 +237,7 @@ const PaymentPage = () => {
     <>
       <Navbar />
       <Toaster position="top-center" />
-      <div className="max-w-4xl mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto px-4 py-20">
         <h1 className="text-3xl font-bold mb-6 text-emerald-600">
           🧾 Payment Details
         </h1>
