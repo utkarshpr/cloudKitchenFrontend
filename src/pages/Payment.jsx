@@ -11,6 +11,7 @@ const PaymentPage = () => {
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [editingAddress, setEditingAddress] = useState(null);
   const [addingAddress, setAddingAddress] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState(null);
   const [addressForm, setAddressForm] = useState({
     Name: "",
     City: "",
@@ -26,6 +27,8 @@ const PaymentPage = () => {
   const [otp, setOtp] = useState("");
   const [loadingOtp, setLoadingOtp] = useState(false);
   const [userUpiId, setUserUpiId] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
 
   const DEFAULT_PIC =
     "https://imgs.search.brave.com/Z0EEymsLVCCMKvWpyP6Vc3cjb_v0Zy3vu42RTP-FfCc/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9jZG4u/cGl4YWJheS5jb20v/cGhvdG8vMjAxNy8w/Ni8xMy8xMi81NC9w/cm9maWxlLTIzOTg3/ODNfNjQwLnBuZw";
@@ -223,60 +226,6 @@ const PaymentPage = () => {
     setShowQr(true);
   };
 
-  const handleSubmitUtr = async () => {
-    console.log(user);
-
-    try {
-      const token = localStorage.getItem("cloudAuth");
-      const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
-      if (!token || !cloudUser?.email) {
-        toast.error("Not logged in!");
-        return;
-      }
-
-      // Extract cart items as { item_id, quantity } for backend
-      const orderItems = cartItems.map((item) => ({
-        item_id: item.ItemID,
-        quantity: item.Quantity,
-      }));
-
-      const selectedAddress = user.addresses.find(
-        (a) => a.ID === selectedAddressId
-      );
-
-      const orderResponse = await axios.post(
-        "https://cloudkitchenbackend.fly.dev/api/orders/create",
-        {
-          user_id: user.id,
-          user_email: user.email,
-          user_name: user.name,
-          amount: calculateTotal(),
-          address_id: selectedAddressId,
-          address: selectedAddress, // entire address object
-          items: orderItems, // pass cart items to backend
-          utr: utr.trim(),
-          user_upi_id: userUpiId.trim(),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const orderId = orderResponse.data.ID;
-
-      await axios.post(
-        `https://cloudkitchenbackend.fly.dev/api/orders/${orderId}/submit-utr`,
-        { utr },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      toast.success("UTR submitted! Redirecting to orders...");
-      setTimeout(() => {
-        window.location.href = "/orders";
-      }, 1500);
-    } catch (error) {
-      toast.error("Failed to submit UTR, try again.");
-    }
-  };
-
   if (!user || loadingCart) return <div className="p-10">Loading...</div>;
 
   return (
@@ -419,47 +368,79 @@ const PaymentPage = () => {
                 payeeName="Utkarsh"
                 amount={calculateTotal()}
               />
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">UPI ID:</span>
-                <span
-                  className="bg-gray-100 px-2 py-1 rounded cursor-pointer select-none"
-                  onClick={() => {
-                    navigator.clipboard.writeText("7979012363@upi");
-                    toast.success("UPI ID copied to clipboard!");
-                  }}
-                >
-                  7979012363@upi
-                </span>
+              <div className="flex justify-center mt-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-700 font-medium">UPI ID:</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("7979012363@upi");
+                      toast.success("UPI ID copied to clipboard!");
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-emerald-700 px-3 py-1 text-sm font-medium transition"
+                  >
+                    7979012363@upi
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 16h8M8 12h8m-8-4h8"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block mb-2 text-sm font-medium text-gray-700">
-                  Upload Payment Screenshot
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const formData = new FormData();
-                    formData.append("payment_screenshot", file);
 
-                    const token = localStorage.getItem("cloudAuth");
-                    const cloudUser = JSON.parse(
-                      localStorage.getItem("cloudUser")
-                    );
-                    const orderItems = cartItems.map((item) => ({
-                      item_id: item.ItemID,
-                      quantity: item.Quantity,
-                    }));
-                    const selectedAddress = user.addresses.find(
-                      (a) => a.ID === selectedAddressId
-                    );
+              <div className="flex justify-center mt-6">
+                <div className="bg-white rounded-xl shadow p-6 w-full max-w-md text-center space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center justify-center gap-2 text-gray-800">
+                    📸 Upload Payment Screenshot
+                  </h3>
 
-                    toast.promise(
-                      axios
-                        .post(
-                          "https://cloudkitchenbackend.fly.dev/api/orders/create-with-screenshot",
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) {
+                        toast.error("Please select an image file.");
+                        return;
+                      }
+                      setSelectedFile(file);
+                      toast.success("Screenshot selected, ready to upload.");
+                    }}
+                    className="block w-full text-sm text-gray-700 border border-dashed border-emerald-300 rounded-lg cursor-pointer bg-emerald-50 hover:bg-emerald-100 focus:outline-none p-3 transition"
+                  />
+                  <button
+                    
+                    onClick={async () => {
+                      try {
+                        const token = localStorage.getItem("cloudAuth");
+                        const cloudUser = JSON.parse(
+                          localStorage.getItem("cloudUser")
+                        );
+                        if (!token || !cloudUser?.email) {
+                          toast.error("Not logged in!");
+                          return;
+                        }
+
+                        const orderItems = cartItems.map((item) => ({
+                          item_id: item.ItemID,
+                          quantity: item.Quantity,
+                        }));
+
+                        const selectedAddress = user.addresses.find(
+                          (a) => a.ID === selectedAddressId
+                        );
+
+                        const orderResponse = await axios.post(
+                          "https://cloudkitchenbackend.fly.dev/api/orders/create",
                           {
                             user_id: user.id,
                             user_email: user.email,
@@ -468,44 +449,62 @@ const PaymentPage = () => {
                             address_id: selectedAddressId,
                             address: selectedAddress,
                             items: orderItems,
+                           
                           },
+                          { headers: { Authorization: `Bearer ${token}` } }
+                        );
+                        
+                        
+                        const orderId = orderResponse.data.order.ID;
+                        setCreatedOrderId(orderId);
+                        
+                        
+                        
+                        if (!selectedFile) {
+                          toast.error("Please select a screenshot first.");
+                          return;
+                        }
+                       
+                        setUploadingScreenshot(true);
+
+                        const formData = new FormData();
+                        formData.append("payment_screenshot", selectedFile);
+                        
+                        await axios.post(
+                          `https://cloudkitchenbackend.fly.dev/api/orders/${orderId}/upload-payment-screenshot`,
+                          formData,
                           {
                             headers: {
                               Authorization: `Bearer ${token}`,
-                            },
-                            params: {
-                              // Optional query params if needed
+                              "Content-Type": "multipart/form-data",
                             },
                           }
-                        )
-                        .then(async (res) => {
-                          const orderId = res.data.ID;
-                          await axios.post(
-                            `https://cloudkitchenbackend.fly.dev/api/orders/${orderId}/upload-payment-screenshot`,
-                            formData,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                                "Content-Type": "multipart/form-data",
-                              },
-                            }
-                          );
-                          toast.success(
-                            "Payment screenshot uploaded! Redirecting..."
-                          );
-                          setTimeout(() => {
-                            window.location.href = "/orders";
-                          }, 1500);
-                        }),
-                      {
-                        loading: "Uploading screenshot...",
-                        success: "Payment screenshot uploaded!",
-                        error: "Failed to upload screenshot. Try again.",
+                        );
+
+                        toast.success(
+                          "Payment screenshot uploaded! Redirecting..."
+                        );
+                        setTimeout(() => {
+                          window.location.href = "/orders";
+                        }, 1500);
+                      } catch (error) {
+                        console.error(error);
+                        toast.error("Failed to upload payment screenshot.");
+                      } finally {
+                        setUploadingScreenshot(false);
                       }
-                    );
-                  }}
-                  className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
-                />
+                    }}
+                    className={`mt-4 w-full py-3 rounded-lg text-white text-lg font-medium transition ${
+                      !selectedFile 
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-emerald-500 hover:bg-emerald-600"
+                    }`}
+                  >
+                    {uploadingScreenshot
+                      ? "Uploading..."
+                      : "Submit Payment Screenshot"}
+                  </button>
+                </div>
               </div>
             </div>
           )}

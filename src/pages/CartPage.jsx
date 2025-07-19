@@ -42,7 +42,9 @@ const onProceedToPay = () => {
       setLoading(false);
     }
   };
-
+  
+  
+  
   const updateCartQuantity = async (itemId, quantity) => {
     try {
       const token = localStorage.getItem("cloudAuth");
