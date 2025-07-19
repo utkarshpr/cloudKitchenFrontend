@@ -481,9 +481,18 @@ const PaymentPage = () => {
                           }
                         );
 
-                        toast.success(
-                          "Payment screenshot uploaded! Redirecting..."
+                        toast.success("Payment screenshot uploaded! Clearing cart...");
+                    
+                        await axios.delete(
+                            `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`,
+                                },
+                            }
                         );
+                    
+                        toast.success("Cart cleared successfully! Redirecting...");
                         setTimeout(() => {
                           window.location.href = "/orders";
                         }, 1500);

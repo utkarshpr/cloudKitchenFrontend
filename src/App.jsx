@@ -11,6 +11,8 @@ import Contact from './pages/Contact.jsx';
 import About from './pages/About.jsx';
 import PaymentPage from './pages/Payment.jsx';
 
+import OrdersPage from './components/OrderForm.jsx';
+
 function App() {
   return (
     <Router>
@@ -20,6 +22,7 @@ function App() {
           <Route path="/contact" element={<ProtectedRoute><Contact /></ProtectedRoute>} />
           <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path='/home' element={ <ProtectedRoute>
               <Home />

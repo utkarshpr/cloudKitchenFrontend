@@ -31,6 +31,21 @@ const HomePage = () => {
         navigate("/login");
         return;
       }
+
+      
+    
+    const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
+
+    await axios.delete(
+        `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+  
       const response = await axios.get(
         "https://cloudkitchenbackend.fly.dev/api/getCatalog",
         {
