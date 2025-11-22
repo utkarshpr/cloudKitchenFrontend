@@ -38,7 +38,7 @@ function CreateCatalogPage() {
       };
 
       await axios.post(
-        "https://cloudkitchenbackend.fly.dev/api/createCatalog",
+        "https://cloudkitchenbackend-production.up.railway.app/api/createCatalog",
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );

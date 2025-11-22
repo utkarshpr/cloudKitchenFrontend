@@ -31,7 +31,7 @@ const OrdersPage = () => {
       const token = localStorage.getItem("cloudAuth");
       const query = statusFilter !== "all" ? `?status=${statusFilter}` : "";
       const response = await axios.get(
-        `https://cloudkitchenbackend.fly.dev/api/orders/user${query}`,
+        `https://cloudkitchenbackend-production.up.railway.app/api/orders/user${query}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -47,7 +47,7 @@ const OrdersPage = () => {
 
       const fetchItemPromises = Array.from(uniqueItemIds).map(id =>
         axios
-          .get(`https://cloudkitchenbackend.fly.dev/api/getItem/${id}`, {
+          .get(`https://cloudkitchenbackend-production.up.railway.app/api/getItem/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then(res => ({ id, data: res.data }))

@@ -14,7 +14,7 @@ function DashboardPage() {
       setLoading(true);
       const token = localStorage.getItem("cloudAuth");
       const response = await axios.get(
-        "https://cloudkitchenbackend.fly.dev/api/getCatalog",
+        "https://cloudkitchenbackend-production.up.railway.app/api/getCatalog",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCatalog(response.data);
@@ -30,7 +30,7 @@ function DashboardPage() {
     if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       const token = localStorage.getItem("cloudAuth");
-      await axios.delete(`https://cloudkitchenbackend.fly.dev/api/deleteCatalog/${id}`, {
+      await axios.delete(`https://cloudkitchenbackend-production.up.railway.app/api/deleteCatalog/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Item deleted successfully");

@@ -37,7 +37,7 @@ const HomePage = () => {
     const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
 
     await axios.delete(
-        `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
+        `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -47,7 +47,7 @@ const HomePage = () => {
 
   
       const response = await axios.get(
-        "https://cloudkitchenbackend.fly.dev/api/getCatalog",
+        "https://cloudkitchenbackend-production.up.railway.app/api/getCatalog",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -105,7 +105,7 @@ const HomePage = () => {
             return;
         }
         const response = await axios.get(
-            `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(userEmail)}`,
+            `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${encodeURIComponent(userEmail)}`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -152,7 +152,7 @@ useEffect(() => {
         if (newQuantity < 0) return;
 
         await axios.post(
-            "https://cloudkitchenbackend.fly.dev/api/cart/update",
+            "https://cloudkitchenbackend-production.up.railway.app/api/cart/update",
             { itemId, quantity: newQuantity },
             { headers: { Authorization: `Bearer ${token}` } }
         );

@@ -25,11 +25,11 @@ const onProceedToPay = () => {
         navigate("/login");
         return;
       }
-      const response = await axios.get(`https://cloudkitchenbackend.fly.dev/api/cart/items?email=${cloudUser.email}`, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.get(`https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${cloudUser.email}`, { headers: { Authorization: `Bearer ${token}` } });
       const cartData = response.data;
       const detailedCartItems = await Promise.all(cartData.map(async (item) => {
         try {
-          const detailResponse = await axios.get(`https://cloudkitchenbackend.fly.dev/api/getItem/${item.ItemID}`, { headers: { Authorization: `Bearer ${token}` } });
+          const detailResponse = await axios.get(`https://cloudkitchenbackend-production.up.railway.app/api/getItem/${item.ItemID}`, { headers: { Authorization: `Bearer ${token}` } });
           return { ...item, CatalogItem: detailResponse.data };
         } catch {
           return { ...item, CatalogItem: null };
@@ -53,7 +53,7 @@ const onProceedToPay = () => {
         navigate("/login");
         return;
       }
-      await axios.post("https://cloudkitchenbackend.fly.dev/api/cart/update", { itemId, quantity }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post("https://cloudkitchenbackend-production.up.railway.app/api/cart/update", { itemId, quantity }, { headers: { Authorization: `Bearer ${token}` } });
       fetchCartItems();
       toast.success("Cart updated");
     } catch {

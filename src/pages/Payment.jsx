@@ -43,7 +43,7 @@ const PaymentPage = () => {
       try {
         const token = localStorage.getItem("cloudAuth");
         const res = await axios.get(
-          "https://cloudkitchenbackend.fly.dev/api/getUser",
+          "https://cloudkitchenbackend-production.up.railway.app/api/getUser",
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUser(res.data);
@@ -64,7 +64,7 @@ const PaymentPage = () => {
           return;
         }
         const response = await axios.get(
-          `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${cloudUser.email}`,
+          `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${cloudUser.email}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const cartData = response.data;
@@ -72,7 +72,7 @@ const PaymentPage = () => {
           cartData.map(async (item) => {
             try {
               const detailResponse = await axios.get(
-                `https://cloudkitchenbackend.fly.dev/api/getItem/${item.ItemID}`,
+                `https://cloudkitchenbackend-production.up.railway.app/api/getItem/${item.ItemID}`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               return { ...item, CatalogItem: detailResponse.data };
@@ -101,7 +101,7 @@ const PaymentPage = () => {
   const refreshUser = async () => {
     const token = localStorage.getItem("cloudAuth");
     const res = await axios.get(
-      "https://cloudkitchenbackend.fly.dev/api/getUser",
+      "https://cloudkitchenbackend-production.up.railway.app/api/getUser",
       { headers: { Authorization: `Bearer ${token}` } }
     );
     setUser(res.data);
@@ -127,7 +127,7 @@ const PaymentPage = () => {
       setLoadingOtp(true); // show loader
 
       await axios.post(
-        "https://cloudkitchenbackend.fly.dev/api/address/send-otp",
+        "https://cloudkitchenbackend-production.up.railway.app/api/address/send-otp",
         { email: user.email },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -145,7 +145,7 @@ const PaymentPage = () => {
     try {
       const token = localStorage.getItem("cloudAuth");
       await axios.post(
-        "https://cloudkitchenbackend.fly.dev/api/address/verify-otp",
+        "https://cloudkitchenbackend-production.up.railway.app/api/address/verify-otp",
         {
           email: user.email, // or addressForm.Email if you add
           otp: otp.trim(),
@@ -156,7 +156,7 @@ const PaymentPage = () => {
       // After OTP verification, proceed to save the address
       if (addingAddress) {
         await axios.post(
-          "https://cloudkitchenbackend.fly.dev/api/addUser",
+          "https://cloudkitchenbackend-production.up.railway.app/api/addUser",
           {
             name: addressForm.Name,
             city: addressForm.City,
@@ -169,7 +169,7 @@ const PaymentPage = () => {
         toast.success("Address added!");
       } else if (editingAddress) {
         await axios.put(
-          `https://cloudkitchenbackend.fly.dev/api/address/${editingAddress.ID}`,
+          `https://cloudkitchenbackend-production.up.railway.app/api/address/${editingAddress.ID}`,
           addressForm,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -189,7 +189,7 @@ const PaymentPage = () => {
     try {
       const token = localStorage.getItem("cloudAuth");
       await axios.delete(
-        `https://cloudkitchenbackend.fly.dev/api/address/${id}`,
+        `https://cloudkitchenbackend-production.up.railway.app/api/address/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Address deleted!");
@@ -445,7 +445,7 @@ const PaymentPage = () => {
                         );
 
                         const orderResponse = await axios.post(
-                          "https://cloudkitchenbackend.fly.dev/api/orders/create",
+                          "https://cloudkitchenbackend-production.up.railway.app/api/orders/create",
                           {
                             user_id: user.id,
                             user_email: user.email,
@@ -476,7 +476,7 @@ const PaymentPage = () => {
                         formData.append("payment_screenshot", selectedFile);
                         
                         await axios.post(
-                          `https://cloudkitchenbackend.fly.dev/api/orders/${orderId}/upload-payment-screenshot`,
+                          `https://cloudkitchenbackend-production.up.railway.app/api/orders/${orderId}/upload-payment-screenshot`,
                           formData,
                           {
                             headers: {
@@ -489,7 +489,7 @@ const PaymentPage = () => {
                         toast.success("Payment screenshot uploaded! Clearing cart...");
                     
                         await axios.delete(
-                            `https://cloudkitchenbackend.fly.dev/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
+                            `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
                             {
                                 headers: {
                                     Authorization: `Bearer ${token}`,

@@ -21,7 +21,7 @@ function EditCatalogPage() {
       try {
         const token = localStorage.getItem("cloudAuth");
         const response = await axios.get(
-          "https://cloudkitchenbackend.fly.dev/api/getCatalog",
+          "https://cloudkitchenbackend-production.up.railway.app/api/getCatalog",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -63,7 +63,7 @@ function EditCatalogPage() {
       const token = localStorage.getItem("cloudAuth");
       console.log(payload);
       await axios.patch(
-        `https://cloudkitchenbackend.fly.dev/api/updateCatalog/${id}`,
+        `https://cloudkitchenbackend-production.up.railway.app/api/updateCatalog/${id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
