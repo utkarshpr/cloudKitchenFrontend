@@ -22,46 +22,72 @@ const HomePage = () => {
 
   const navigate = useNavigate();
 
-  const fetchCatalog = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("cloudAuth");
-      if (!token) {
-        toast.error("You are not logged in!");
-        navigate("/login");
-        return;
-      }
+// inside HomePage component
 
-      
-    
+useEffect(() => {
+  const init = async () => {
+    await fetchCatalog();
+    await fetchCartItems();
+  };
+  init();
+  
+}, [ ]);
+
+
+const fetchCatalog = async () => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("cloudAuth");
+    if (!token) {
+      toast.error("You are not logged in!");
+      navigate("/login");
+      return;
+    }
+
     const cloudUser = JSON.parse(localStorage.getItem("cloudUser"));
 
+    // optional: clear cart on load (if intended)
     await axios.delete(
-        `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
+      `https://cloudkitchenbackend-production.up.railway.app/api/cart/items?email=${encodeURIComponent(cloudUser.email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
 
-  
-      const response = await axios.get(
-        "https://cloudkitchenbackend-production.up.railway.app/api/getCatalog",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const activeItems = response.data.filter((item) => item.IsActive);
-      setCatalog(activeItems);
-      setFilteredCatalog(activeItems);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to fetch catalog");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const response = await axios.get(
+      "https://cloudkitchenbackend-production.up.railway.app/api/getCatalog",
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    // Normalize keys so UI uses consistent fields
+    const normalized = response.data.map((item) => ({
+      ID: item.ID || item.id || item.Id,
+      Name: item.Name || item.name,
+      Description: item.Description || item.description,
+      Price: item.Price || item.price,
+      ImageURL: item.ImageURL || item.image_url || item.imageUrl || "", // <-- important
+      IsActive: item.IsActive !== undefined ? item.IsActive : item.is_active,
+      CreatedAt: item.CreatedAt || item.createdAt || item.created_at,
+      Category: (item.Category || item.category || "other").toString(),
+      Type: item.Type || item.type || "Main",
+    }));
+
+    const activeItems = normalized.filter((it) => it.IsActive);
+    setCatalog(activeItems);
+    setFilteredCatalog(activeItems);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to fetch catalog");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const handleSearchAndFilter = () => {
     let result = [...catalog];
@@ -77,9 +103,6 @@ const HomePage = () => {
     setFilteredCatalog(result);
   };
 
-  useEffect(() => {
-    fetchCatalog();
-  }, []);
 
   useEffect(() => {
     handleSearchAndFilter();
@@ -122,10 +145,10 @@ const HomePage = () => {
     }
 };
 
-useEffect(() => {
-    fetchCatalog();
-    fetchCartItems();
-}, []);
+// useEffect(() => {
+//     fetchCatalog();
+//     fetchCartItems();
+// }, []);
 
 
 
