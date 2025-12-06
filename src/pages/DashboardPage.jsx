@@ -55,21 +55,31 @@ function DashboardPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">📋 Cloud Kitchen Admin Dashboard</h1>
         <div className="flex gap-2">
-          <button
-            onClick={() => navigate("/create")}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-full text-sm transition"
-          >
-            <Plus size={16} />
-            Create Item
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-        </div>
+  <button
+    onClick={() => navigate("/create")}
+    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-full text-sm transition"
+  >
+    <Plus size={16} />
+    Create Item
+  </button>
+
+  {/* NEW BUTTON → Go to Admin Orders Page */}
+  <button
+    onClick={() => navigate("/admin/orders")}
+    className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-full text-sm transition"
+  >
+    📦 Orders
+  </button>
+
+  <button
+    onClick={handleLogout}
+    className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition"
+  >
+    <LogOut size={16} />
+    Logout
+  </button>
+</div>
+
       </div>
 
       {loading ? (

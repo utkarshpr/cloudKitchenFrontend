@@ -23,15 +23,14 @@ const HomePage = () => {
   const navigate = useNavigate();
 
 // inside HomePage component
-
 useEffect(() => {
   const init = async () => {
     await fetchCatalog();
     await fetchCartItems();
   };
   init();
-  
-}, [ ]);
+}, []);
+
 
 
 const fetchCatalog = async () => {

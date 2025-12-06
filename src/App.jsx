@@ -13,6 +13,7 @@ import PaymentPage from './pages/Payment.jsx';
 
 import OrdersPage from './components/OrderForm.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import AdminOrdersPage from './pages/AdminOrdersPage.jsx';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/about" element={<ProtectedRoute><About /></ProtectedRoute>} />
           <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+          <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
           <Route path='/home' element={ <ProtectedRoute>
               <Home />
             </ProtectedRoute>}/>

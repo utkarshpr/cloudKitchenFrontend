@@ -7,6 +7,12 @@ import Navbar from "./Navbar";
 import UpiQr from "../components/UpiQr";
 import { useNavigate } from "react-router-dom";
 
+
+// For now, hardcode.
+// Later you can switch to env: import.meta.env.VITE_ENABLE_ADDRESS_OTP === "true"
+const ENABLE_ADDRESS_OTP = false; // 🔁 change to true when you want OTP
+
+
 const PaymentPage = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -120,70 +126,93 @@ const PaymentPage = () => {
     return true;
   };
 
+  const saveAddressToServer = async () => {
+    const token = localStorage.getItem("cloudAuth");
+  
+    if (addingAddress) {
+      await axios.post(
+        "https://cloudkitchenbackend-production.up.railway.app/api/addUser",
+        {
+          name: addressForm.Name,
+          city: addressForm.City,
+          state: addressForm.State,
+          pincode: addressForm.Pincode,
+          phone: addressForm.Phone,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Address added!");
+    } else if (editingAddress) {
+      await axios.put(
+        `https://cloudkitchenbackend-production.up.railway.app/api/address/${editingAddress.ID}`,
+        addressForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Address updated!");
+    }
+  
+    await refreshUser();
+    closeModal();
+  };
+  
+
   const handleAddOrUpdateAddress = async () => {
     if (!validateAddressForm()) return;
+  
+    // 🏁 If OTP is disabled → directly save & exit
+    if (!ENABLE_ADDRESS_OTP) {
+      try {
+        await saveAddressToServer();
+      } catch (err) {
+        toast.error("Failed to save address.");
+      }
+      return;
+    }
+  
+    // ✅ OTP flow (current behavior)
     try {
       const token = localStorage.getItem("cloudAuth");
-      setLoadingOtp(true); // show loader
-
+      setLoadingOtp(true);
+  
       await axios.post(
         "https://cloudkitchenbackend-production.up.railway.app/api/address/send-otp",
         { email: user.email },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       toast.success("OTP sent to your email. Please verify.");
       setIsVerifyingOtp(true);
     } catch (err) {
       toast.error("Failed to send OTP.");
     } finally {
-      setLoadingOtp(false); // hide loader
+      setLoadingOtp(false);
     }
   };
+  
 
   const handleVerifyOtpAndSave = async () => {
     try {
       const token = localStorage.getItem("cloudAuth");
+  
       await axios.post(
         "https://cloudkitchenbackend-production.up.railway.app/api/address/verify-otp",
         {
-          email: user.email, // or addressForm.Email if you add
+          email: user.email,
           otp: otp.trim(),
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // After OTP verification, proceed to save the address
-      if (addingAddress) {
-        await axios.post(
-          "https://cloudkitchenbackend-production.up.railway.app/api/addUser",
-          {
-            name: addressForm.Name,
-            city: addressForm.City,
-            state: addressForm.State,
-            pincode: addressForm.Pincode,
-            phone: addressForm.Phone,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("Address added!");
-      } else if (editingAddress) {
-        await axios.put(
-          `https://cloudkitchenbackend-production.up.railway.app/api/address/${editingAddress.ID}`,
-          addressForm,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("Address updated!");
-      }
-
-      await refreshUser();
-      closeModal();
+  
+      // ✅ After successful OTP, save the address
+      await saveAddressToServer();
+  
       setIsVerifyingOtp(false);
       setOtp("");
     } catch (err) {
       toast.error("Invalid OTP, please try again.");
     }
   };
+  
 
   const handleDeleteAddress = async (id) => {
     try {
@@ -591,7 +620,7 @@ const PaymentPage = () => {
             </div>
           </div>
         )}
-        {isVerifyingOtp && (
+        {ENABLE_ADDRESS_OTP && isVerifyingOtp && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm space-y-4">
               <h3 className="text-lg font-semibold">Enter OTP to verify</h3>
@@ -622,7 +651,7 @@ const PaymentPage = () => {
             </div>
           </div>
         )}
-        {loadingOtp && (
+        {ENABLE_ADDRESS_OTP && loadingOtp && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white rounded-full p-4 flex items-center justify-center">
               <svg
